@@ -1,7 +1,14 @@
 {
   "devDependencies": {
     "@types/node": "^25.6.0",
+    "prisma": "^6.19.3",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3"
   }
 }
