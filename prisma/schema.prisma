@@ -6,6 +6,11 @@ generator client {
   output   = "../src/generated/prisma"
 }
 
+// Pothos generator block
+generator pothos {
+  provider = "prisma-pothos-types"
+}
+
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
