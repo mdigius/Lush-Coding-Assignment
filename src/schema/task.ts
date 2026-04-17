@@ -4,7 +4,9 @@
  * The Task type includes all fields defined in the Prisma schema
  * Used by the GraphQL server to understand the structure of Task data.
  * Defines a query to fetch all tasks and a mutation to add a new task, utilizing Prisma for database interactions.
+ * Includes validation for input arguments using Zod schemas and error handling for cases where tasks are not found.
  */
+import { taskIdSchema, taskTitleSchema } from "../validation/task";
 import { builder } from "./builder";
 import { GraphQLError } from "graphql";
 
@@ -38,7 +40,10 @@ builder.queryField("task", (t) =>
         type: "Task",
         description: 'Fetch a task by ID.',
         args: {
-            id: t.arg.id({ required: true }),
+            id: t.arg.id({
+                required: true,
+                validate: { schema: taskIdSchema },
+            }),
         },
         resolve: (query, root, args, context) => {
             return context.prisma.task.findUnique({
@@ -51,61 +56,67 @@ builder.queryField("task", (t) =>
 
 // Mutations
 builder.mutationField('addTask', (t) =>
-  t.prismaField({
-    type: 'Task',
-    description: 'Create a new task. Defaults to not completed.',
-    args: {
-      title: t.arg.string({ required: true }),
-    },
-    resolve: (query, _root, args, ctx) =>
-      ctx.prisma.task.create({
-        ...query,
-        data: { title: args.title },
-      }),
-  }),
+    t.prismaField({
+        type: 'Task',
+        description: 'Create a new task. Defaults to not completed.',
+        args: {
+            title: t.arg.string({
+                required: true,
+                validate: { schema: taskTitleSchema }
+            }),
+        },
+        resolve: (query, _root, args, ctx) =>
+            ctx.prisma.task.create({
+                ...query,
+                data: { title: args.title },
+            }),
+    }),
 );
 
 builder.mutationField('toggleTask', (t) =>
-  t.prismaField({
-    type: 'Task',
-    description: 'Toggle the completed status of a task.',
-    args: {
-      id: t.arg.id({ required: true }),
-    },
-    resolve: async (query, _root, args, ctx) => {
-      const task = await ctx.prisma.task.findUnique({
-        where: { id: args.id },
-      });
-      if (!task) {
-        throw new GraphQLError('Task not found');
-      }
-      return ctx.prisma.task.update({
-        ...query,
-        where: { id: args.id },
-        data: { completed: !task.completed },
-      });
-    },
-  }),
+    t.prismaField({
+        type: 'Task',
+        description: 'Toggle the completed status of a task.',
+        args: {
+            id: t.arg.id({ required: true, validate: { schema: taskIdSchema } }),
+        },
+        resolve: async (query, _root, args, ctx) => {
+            const task = await ctx.prisma.task.findUnique({
+                where: { id: args.id },
+            });
+            if (!task) {
+                throw new GraphQLError('Task not found');
+            }
+            return ctx.prisma.task.update({
+                ...query,
+                where: { id: args.id },
+                data: { completed: !task.completed },
+            });
+        },
+    }),
 );
 
 builder.mutationField('deleteTask', (t) =>
-  t.prismaField({
-    type: 'Task',
-    description: 'Delete a task by ID.',
-    args: {
-      id: t.arg.id({ required: true }),
-    },
-    resolve: async (query, _root, args, ctx) => {
-      const task = await ctx.prisma.task.findUnique({
-        where: { id: args.id },
-      });
-      if (!task) {
-        throw new GraphQLError('Task not found');
-      }
-      return ctx.prisma.task.delete({
-        ...query,
-        where: { id: args.id },
-      });
-    },
-  }),
+    t.prismaField({
+        type: 'Task',
+        description: 'Delete a task by ID.',
+        args: {
+            id: t.arg.id({
+                required: true,
+                validate: { schema: taskIdSchema }
+            }),
+        },
+        resolve: async (query, _root, args, ctx) => {
+            const task = await ctx.prisma.task.findUnique({
+                where: { id: args.id },
+            });
+            if (!task) {
+                throw new GraphQLError('Task not found');
+            }
+            return ctx.prisma.task.delete({
+                ...query,
+                where: { id: args.id },
+            });
+        },
+    }),
 );
