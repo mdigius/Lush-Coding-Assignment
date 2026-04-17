@@ -28,9 +28,18 @@ builder.prismaObject('Task', {
 builder.queryField("tasks", (t) =>
     t.prismaField({
         type: ["Task"],
-        description: 'Fetch all tasks.',
+        description: 'Fetch all tasks. Optionally filter by completion status.',
+        args: {
+            completed: t.arg.boolean({
+                required: false,
+            }),
+        },
         resolve: (query, root, args, context) => {
-            return context.prisma.task.findMany({ ...query });
+            const where = args.completed !== undefined && args.completed !== null ? { completed: args.completed } : undefined;
+            return context.prisma.task.findMany({ 
+                ...query,
+                ...(where && { where }),
+            });
         },
     })
 );
@@ -68,6 +77,29 @@ builder.mutationField('addTask', (t) =>
         resolve: (query, _root, args, ctx) =>
             ctx.prisma.task.create({
                 ...query,
+                data: { title: args.title },
+            }),
+    }),
+);
+
+builder.mutationField('updateTitle', (t) =>
+    t.prismaField({
+        type: 'Task',
+        description: 'Update the title of a task.',
+        args: {
+            id: t.arg.id({
+                required: true,
+                validate: { schema: taskIdSchema }
+            }),
+            title: t.arg.string({
+                required: true,
+                validate: { schema: taskTitleSchema }
+            }),
+        },
+        resolve: (query, _root, args, ctx) =>
+            ctx.prisma.task.update({
+                ...query,
+                where: { id: args.id },
                 data: { title: args.title },
             }),
     }),

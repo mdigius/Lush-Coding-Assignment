@@ -15,4 +15,3 @@ export const taskTitleSchema = z
     .string()
     .min(1, "Task title cannot be empty")
     .max(255, "Task title cannot exceed 255 characters");
-
