@@ -11,7 +11,10 @@ A GraphQL API for managing a simple task list, built with TypeScript, GraphQL, Y
 
 ```bash
 npm install
+cp .env.example .env
 npx prisma migrate deploy
+npx prisma generate
+npm run db:seed
 npm run dev
 ```
 
